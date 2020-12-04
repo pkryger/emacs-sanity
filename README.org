@@ -1,0 +1,17 @@
+* Minimal Emacs configuration for speed and sanity
+
+  This is a minimal configuration for Emacs, that has the most important (to me) bits and pieces from [[https://github.com/emacs-exordium/exordium][exordium]] and my config that decreases a possibility of me loosing my sanity.
+
+** Usage
+   The assumption is that [[https://iterm2.com][iTerm2]] is used.
+
+   #+begin_src sh
+git clone https://github.com/pkryger/emacs-sanity.git ~/.emacs-sanity
+emacs --quick -nw -l ~/.emacs-sanity/sanity.el
+   #+end_src
+
+   From time to time, you may want to update installed packages. I usually do
+   #+begin_src emacs-lisp
+   (package-list-packages)
+   #+end_src
+   followed by =U=.
