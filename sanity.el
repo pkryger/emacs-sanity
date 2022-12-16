@@ -18,7 +18,7 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(package-selected-packages (quote (gcmh iedit magit))))
+ '(package-selected-packages (quote (gcmh iedit magit vertico orderless))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -177,6 +177,12 @@ Defer it so that commands launched immediately after will enjoy the benefits."
 (setq gcmh-idle-delay 5
       gcmh-high-cons-threshold pk/gc-cons-threshold)
 (gcmh-mode)
+
+(require 'vertico)
+(vertico-mode)
+
+(require 'orderless)
+(setq completion-styles '(orderless basic))
 
 (provide 'sanity)
 ;;; sanity.el ends here
