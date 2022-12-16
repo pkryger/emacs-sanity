@@ -158,26 +158,6 @@
 (global-set-key (kbd "C-c g l") #'magit-log)
 (global-set-key (kbd "C-c g b") #'magit-blame)
 
-;; configure icomplete mode
-(require 'icomplete)
-(icomplete-mode)
-;; show choices vertically
-(setq icomplete-separator "\n")
-(setq icomplete-hide-common-prefix nil)
-(setq icomplete-in-buffer t)
-(setq icomplete-delay-completions-threshold 100)
-(setq icomplete-max-delay-chars 2)
-(setq icomplete-compute-delay 0.2)
-(setq icomplete-show-matches-on-no-input t)
-(setq icomplete-with-completion-tables t)
-(setq icomplete-tidy-shadowed-file-names t)
-
-(define-key icomplete-minibuffer-map (kbd "<down>") 'icomplete-forward-completions)
-(define-key icomplete-minibuffer-map (kbd "C-n") 'icomplete-forward-completions)
-(define-key icomplete-minibuffer-map (kbd "<up>") 'icomplete-backward-completions)
-(define-key icomplete-minibuffer-map (kbd "C-p") 'icomplete-backward-completions)
-
-
 ;; garbage collection based on DOOM setup
 (defconst pk/gc-cons-threshold (* 16 1024 1024))
 (defun pk/defer-garbage-collection ()
