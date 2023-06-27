@@ -153,11 +153,6 @@
             #'display-fill-column-indicator-mode)
   (global-set-key (kbd "C-|") #'display-fill-column-indicator-mode))
 
-;; magit keybindings
-(global-set-key (kbd "C-c g s") #'magit-status)
-(global-set-key (kbd "C-c g l") #'magit-log)
-(global-set-key (kbd "C-c g b") #'magit-blame)
-
 ;; garbage collection based on DOOM setup
 (defconst pk/gc-cons-threshold (* 16 1024 1024))
 (defun pk/defer-garbage-collection ()
