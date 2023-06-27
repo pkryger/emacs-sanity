@@ -28,7 +28,7 @@
 
 ;; setup package
 (require 'package)
-(let ((melpa (cons "melpa" "http://melpa.org/packages/")))
+(let ((melpa (cons "melpa" "https://melpa.org/packages/")))
   (unless (member melpa package-archives)
     (add-to-list 'package-archives melpa)))
 (package-initialize)
