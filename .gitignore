@@ -1,2 +1,4 @@
 elpa/**
 transient/**
+/eln-cache/
+emacs-custom.el
