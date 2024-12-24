@@ -50,33 +50,89 @@
   :ensure t)
 
 
-(defvar modus-themes-to-toggle '(modus-operandi modus-vivendi))
 
-(defun pk/modus-themes-load (&optional arg)
-  "Switch theme according to current system setting.
-If called with ARG toggle the theme."
-  (interactive "P")
-  (if arg
-      (if (eq (car custom-enabled-themes)
-              (car modus-themes-to-toggle))
-          (load-theme (cadr modus-themes-to-toggle))
-        (load-theme (car modus-themes-to-toggle)))
-    (when-let* ((appearance (or
-                             (shell-command-to-string
-                              "defaults read -g AppleInterfaceStyle | tr -d '\n'")
-                             "light"))
-                (desired-theme (let ((case-fold-search t))
-                                 (if (string-match-p "dark" appearance)
-                                     (cadr modus-themes-to-toggle)
-                                   (car modus-themes-to-toggle))))
-                ((not (eq desired-theme (car custom-enabled-themes)))))
-      (load-theme desired-theme))))
+(declare-function dbus-list-activatable-names nil)
+(declare-function dbus-ignore-errors nil)
+(declare-function dbus-call-method nil)
+(declare-function w32-read-registry nil)
+
+(defun pk/themes--is-dark-mode ()
+  "Return non-nil if current system UI is in dark mode."
+  (let ((script (concat "tell application \"System Events\" "
+                        "to tell appearance preferences "
+                        "to return dark mode")))
+    (ignore-errors
+      (cond
+       ((fboundp 'mac-do-applescript)
+        (string-equal "true" (mac-do-applescript script)))
+       ((fboundp 'ns-do-applescript)
+        (string-equal "true" (ns-do-applescript script)))
+       ((eq system-type 'darwin)
+        (string-equal "true" (string-trim
+                       (shell-command-to-string
+                        (format "osascript -e '%s'" script)))))
+       ((eq system-type 'windows-nt)
+        (eq 0 (w32-read-registry
+               'HKCU
+			   "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize"
+			   "AppsUseLightTheme")))
+       ((and (eq system-type 'gnu/linux)
+             (member 'dbus features)
+             (member "org.freedesktop.portal.Desktop"
+                     (dbus-list-activatable-names :session)))
+        (eq 1 (caar (dbus-ignore-errors
+                      (dbus-call-method
+                       :session
+                       "org.freedesktop.portal.Desktop"
+                       "/org/freedesktop/portal/desktop"
+                       "org.freedesktop.portal.Settings" "Read"
+                       "org.freedesktop.appearance" "color-scheme")))))
+       ((and (eq system-type 'gnu/linux)
+             (member 'dbus features)
+             (cl-search "termux-fix-shebang"
+                        (shell-command-to-string
+                         "command -v termux-fix-shebang")))
+        (string-equal "Night mode: yes"
+                      (shell-command-to-string
+                       "echo -n $(cmd uimode night 2>&1 </dev/null)")))))))
+
+(defvar pk/themes-to-toggle '(modus-operandi modus-vivendi))
+
+(defun pk/themes-toggle ()
+  "Toggle theme between light and dark version."
+  (interactive)
+  (pcase-let ((`(,to-disable ,to-enable)
+               (if (eq (car custom-enabled-themes)
+                       (car pk/themes-to-toggle))
+                   pk/themes-to-toggle
+                 (reverse pk/themes-to-toggle))))
+    (disable-theme to-disable)
+    (if (custom-theme-p to-enable)
+        (enable-theme to-enable)
+      (load-theme to-enable 'no-confirm))))
+
+(defun pk/themes--follow-system ()
+  "Switch theme according to current system setting."
+  (when-let* ((appearance (or
+                           (string-trim (shell-command-to-string
+                            "defaults read -g AppleInterfaceStyle"))
+                           "light"))
+              (desired-theme (let ((case-fold-search t))
+                               (if (string-match-p "dark" appearance)
+                                   (cadr pk/themes-to-toggle)
+                                 (car pk/themes-to-toggle))))
+              ((not (eq desired-theme (car custom-enabled-themes)))))
+    (when (car custom-enabled-themes)
+      (disable-theme (car custom-enabled-themes)))
+    (if (custom-theme-p desired-theme)
+        (enable-theme desired-theme)
+      (load-theme desired-theme 'no-confirm))))
 
 (when (boundp 'mac-effective-appearance-change-hook)
   (add-hook 'mac-effective-appearance-change-hook
-            #'pk/modus-themes-load))
+            #'pk/themes--follow-system))
 
-(pk/modus-themes-load)
+(pk/themes--follow-system)
 
 
 ;; custom functions
@@ -199,7 +255,7 @@ Defer it so that commands launched immediately after will enjoy the benefits."
  ("C-z" . undo)
  ("C-|" . display-fill-column-indicator-mode)
  ("C-c d" . pk/duplicate-line-or-region)
- ("<f5>" . pk/modus-themes-load))
+ ("<f5>" . pk/themes-toggle))
 
 
 (use-package prog-mode
