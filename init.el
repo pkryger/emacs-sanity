@@ -144,68 +144,6 @@
 
 (setq interprogram-cut-function 'pk/iterm-cut-base64)
 
-(defun pk/duplicate-line-or-region (arg)
-  "Duplicate current line or region 2 or ARG times, leaving point in lower line."
-  (interactive "*p")
-  ;; Save the point for undo
-  (setq buffer-undo-list (cons (point) buffer-undo-list))
-  (let ((bol (if mark-active (region-beginning)
-               (save-excursion (beginning-of-line) (point))))
-        eol
-        (num-lines (if mark-active
-                       (count-lines (region-beginning) (region-end))
-                     1))
-        (col (current-column)))
-    (save-excursion
-      (if mark-active
-          (setq eol (region-end))
-        (end-of-line)
-        (setq eol (point)))
-      ;; Disable the recording of undo information
-      (let ((line (buffer-substring bol eol))
-            (buffer-undo-list t))
-        ;; Insert the line arg times
-        (dotimes (i (if (> arg 0) arg 1))
-          (unless (string-suffix-p "\n" line)
-            (newline))
-          (insert line)))
-      ;; Create the undo information
-      (setq buffer-undo-list (cons (cons eol (point)) buffer-undo-list)))
-    ;; Move the point to the lowest line
-    (forward-line (* arg num-lines))
-    (when (= num-lines 1)
-      ;; Leave the cursor an the same column if we duplicated 1 line
-      (move-to-column col))))
-
-(defun pk/rename-file-and-buffer (new-name)
-  "Rename both current buffer and file it's visiting to NEW-NAME."
-  (interactive "sNew name: ")
-  (let ((name (buffer-name))
-        (filename (buffer-file-name)))
-    (if (not filename)
-        (message "Buffer '%s' is not visiting a file!" name)
-      (if (get-buffer new-name)
-          (message "A buffer named '%s' already exists!" new-name)
-        (rename-file filename new-name 1)
-        (rename-buffer new-name)
-        (set-visited-file-name new-name)
-        (set-buffer-modified-p nil)))))
-
-(defun pk/move-buffer-file (dir)
-  "Move both current buffer and file it's visiting to DIR."
-  (interactive "DNew directory: ")
-  (let* ((name (buffer-name))
-         (filename (buffer-file-name))
-         (dir (if (string-match dir "\\(?:/\\|\\\\)$")
-                  (substring dir 0 -1)
-                dir))
-         (new-name (concat dir "/" name)))
-    (if (not filename)
-        (message "Buffer '%s' is not visiting a file!" name)
-      (copy-file filename new-name 1)
-      (delete-file filename)
-      (set-visited-file-name new-name)
-      (set-buffer-modified-p nil))))
 
 ;; garbage collection based on DOOM setup
 (defconst pk/gc-cons-threshold (* 16 1024 1024))
@@ -254,7 +192,7 @@ Defer it so that commands launched immediately after will enjoy the benefits."
  ("M-g" . goto-line)
  ("C-z" . undo)
  ("C-|" . display-fill-column-indicator-mode)
- ("C-c d" . pk/duplicate-line-or-region)
+ ("C-c d" . duplicate-dwim)
  ("<f5>" . pk/themes-toggle))
 
 
