@@ -10,6 +10,7 @@
 (setf gc-cons-threshold most-positive-fixnum)
 (setq custom-file
       (expand-file-name (locate-user-emacs-file "emacs-custom.el")))
+(require 'cl-lib)
 
 
 ;; setup packages management
@@ -50,7 +51,6 @@
   :ensure t)
 
 
-
 (declare-function dbus-list-activatable-names nil)
 (declare-function dbus-ignore-errors nil)
 (declare-function dbus-call-method nil)
@@ -96,44 +96,56 @@
                       (shell-command-to-string
                        "echo -n $(cmd uimode night 2>&1 </dev/null)")))))))
 
-(defvar pk/themes-to-toggle '(modus-operandi modus-vivendi))
+(require-theme 'modus-themes t)
+(setopt modus-themes-to-toggle '(modus-operandi modus-vivendi))
 
-(defun pk/themes-toggle ()
-  "Toggle theme between light and dark version."
-  (interactive)
-  (pcase-let ((`(,to-disable ,to-enable)
-               (if (eq (car custom-enabled-themes)
-                       (car pk/themes-to-toggle))
-                   pk/themes-to-toggle
-                 (reverse pk/themes-to-toggle))))
-    (disable-theme to-disable)
-    (if (custom-theme-p to-enable)
-        (enable-theme to-enable)
-      (load-theme to-enable 'no-confirm))))
+(defun pk/themes--custom-faces ()
+  "Tune up some modus themes faces."
+  (cl-flet ((foreground-color (face)
+              (when-let* ((color (face-attribute face :foreground))
+                          ((not (eq color 'unspecified))))
+                (list :color color))))
+   (modus-themes-with-colors
+    (custom-theme-set-faces
+     'user
+     `(fill-column-indicator
+       ((t (,@class :height 1.0
+                    :background ,bg-main
+                    :foreground ,bg-inactive))))
+     `(iedit-occurrence
+       ((t (,@class
+            :inherit nil
+            :box (:line-width -2 ,@(foreground-color
+                                    'modus-themes-completion-match-0))))))
+     `(iedit-read-only-occurrence
+       ((t (,@class
+            :inherit nil
+            :box (:line-width -2 ,@(foreground-color
+                                    'modus-themes-completion-match-1))))))
+     `(aw-leading-char-face
+       ((t (,@class :foreground ,red-intense
+                    :bold t
+                    :height 1.5))))))))
+
+(add-hook 'modus-themes-after-load-theme-hook
+          #'pk/themes--custom-faces)
 
 (defun pk/themes--follow-system ()
   "Switch theme according to current system setting."
-  (when-let* ((appearance (or
-                           (string-trim (shell-command-to-string
-                            "defaults read -g AppleInterfaceStyle"))
-                           "light"))
-              (desired-theme (let ((case-fold-search t))
-                               (if (string-match-p "dark" appearance)
-                                   (cadr pk/themes-to-toggle)
-                                 (car pk/themes-to-toggle))))
+  (when-let* ((desired-theme (if (pk/themes--is-dark-mode)
+                                 (cadr modus-themes-to-toggle)
+                               (car modus-themes-to-toggle)))
               ((not (eq desired-theme (car custom-enabled-themes)))))
-    (when (car custom-enabled-themes)
-      (disable-theme (car custom-enabled-themes)))
-    (if (custom-theme-p desired-theme)
-        (enable-theme desired-theme)
-      (load-theme desired-theme 'no-confirm))))
+    (pcase desired-theme
+      ('modus-operandi (modus-themes-load-operandi))
+      ('modus-vivendi (modus-themes-load-vivendi)))))
 
 (when (boundp 'mac-effective-appearance-change-hook)
   (add-hook 'mac-effective-appearance-change-hook
             #'pk/themes--follow-system))
 
+(modus-themes-load-themes)
 (pk/themes--follow-system)
-
 
 ;; custom functions
 (defun pk/iterm-cut-base64 (text)
@@ -193,7 +205,7 @@ Defer it so that commands launched immediately after will enjoy the benefits."
  ("C-z" . undo)
  ("C-|" . display-fill-column-indicator-mode)
  ("C-c d" . duplicate-dwim)
- ("<f5>" . pk/themes-toggle))
+ ("<f5>" . modus-themes-toggle))
 
 
 (use-package prog-mode
