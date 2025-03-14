@@ -225,7 +225,17 @@ Defer it so that commands launched immediately after will enjoy the benefits."
 
 (use-package make-mode
   :defer t
-  :hook (makefile-mode . indent-tabs-mode))
+  :init
+  (use-package whitespace
+    :defer t
+    :autoload (whitespace-turn-on)
+    :init
+    (defun pk/makefile-whitespace-mode ()
+      "Turn on `whitespace-mode' that only visualises tabs and end of file."
+      (let ((whitespace-style '(face tabs tab-mark missing-newline-at-eof)))
+        (whitespace-turn-on))))
+  :hook ((makefile-mode . indent-tabs-mode)
+         (makefile-mode . pk/makefile-whitespace-mode)))
 
 (use-package window
   :defer t
