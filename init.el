@@ -207,6 +207,16 @@ Defer it so that commands launched immediately after will enjoy the benefits."
  ("C-c d" . duplicate-dwim)
  ("<f5>" . modus-themes-toggle))
 
+(use-package completion-preview
+  :when (version< "30.1" emacs-version)
+  :bind
+  (:map completion-preview-active-mode-map
+   ("M-n" . #'completion-preview-next-candidate)
+   ("M-p" . #'completion-preview-prev-candidate)
+   ([remap forward-word] . #'completion-preview-insert-word)
+   ([remap forward-sexp] . #'completion-preview-insert-sexp))
+  :config
+  (global-completion-preview-mode))
 
 (use-package prog-mode
   :defer t
