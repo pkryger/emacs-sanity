@@ -109,23 +109,24 @@
     (custom-theme-set-faces
      'user
      `(fill-column-indicator
-       ((t (,@class :height 1.0
+       ((t (,@c :height 1.0
                     :background ,bg-main
                     :foreground ,bg-inactive))))
      `(iedit-occurrence
-       ((t (,@class
+       ((t (,@c
             :inherit nil
             :box (:line-width -2 ,@(foreground-color
                                     'modus-themes-completion-match-0))))))
      `(iedit-read-only-occurrence
-       ((t (,@class
+       ((t (,@c
             :inherit nil
             :box (:line-width -2 ,@(foreground-color
                                     'modus-themes-completion-match-1))))))
      `(aw-leading-char-face
-       ((t (,@class :foreground ,red-intense
-                    :bold t
-                    :height 1.5))))))))
+       ((t (,@c
+	    :foreground ,red-intense
+            :bold t
+            :height 1.5))))))))
 
 (add-hook 'modus-themes-after-load-theme-hook
           #'pk/themes--custom-faces)
@@ -137,14 +138,13 @@
                                (car modus-themes-to-toggle)))
               ((not (eq desired-theme (car custom-enabled-themes)))))
     (pcase desired-theme
-      ('modus-operandi (modus-themes-load-operandi))
-      ('modus-vivendi (modus-themes-load-vivendi)))))
+      ('modus-operandi (modus-themes-load-theme 'modus-operandi))
+      ('modus-vivendi (modus-themes-load-theme 'modus-vivendi)))))
 
 (when (boundp 'mac-effective-appearance-change-hook)
   (add-hook 'mac-effective-appearance-change-hook
             #'pk/themes--follow-system))
 
-(modus-themes-load-themes)
 (pk/themes--follow-system)
 
 ;; custom functions
@@ -200,7 +200,7 @@ Defer it so that commands launched immediately after will enjoy the benefits."
 (global-hl-line-mode)
 
 (bind-keys
- ("C-`" . kill-this-buffer)
+ ("C-`" . kill-current-buffer)
  ("M-g" . goto-line)
  ("C-z" . undo)
  ("C-|" . display-fill-column-indicator-mode)
